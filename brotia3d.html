@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BrotIA 3D · Inteligencia sostenible en armonía</title><link rel="icon" href="logo.png">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:#07140c}
+body{font-family:"Avenir Next","Trebuchet MS",system-ui,sans-serif;color:#dff5e4;user-select:none;-webkit-user-select:none}
+#sky{position:fixed;inset:0;background:radial-gradient(ellipse at 72% 10%,rgba(214,170,80,.5),transparent 42%),radial-gradient(ellipse at 15% 25%,rgba(120,150,70,.3),transparent 40%),linear-gradient(#22331f,#0c1d12 55%,#06120a)}
+#fx{position:fixed;inset:0;width:100%;height:100%}
+.stage{position:fixed;inset:0;perspective:1500px;perspective-origin:50% 38%;display:grid;place-items:center;cursor:grab;touch-action:none}
+.stage:active{cursor:grabbing}
+.rig{position:relative;width:360px;height:500px;transform-style:preserve-3d}
+.shadow{position:absolute;left:-60px;top:-30px;width:480px;height:560px;background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 66%);filter:blur(14px);transform:translateZ(-60px)}
+.book{position:absolute;inset:0;transform-style:preserve-3d}
+.f{position:absolute;backface-visibility:hidden}
+.front{inset:0;transform:translateZ(27px);transform-style:preserve-3d;border-radius:4px 10px 10px 4px;overflow:visible}
+.front canvas{position:absolute;inset:0;width:100%;height:100%;border-radius:4px 10px 10px 4px}
+.glow{position:absolute;left:8%;top:4%;width:84%;height:62%;background:radial-gradient(closest-side,rgba(110,255,170,.4),rgba(70,160,255,.18) 55%,transparent);animation:pul 3.4s ease-in-out infinite;transform:translateZ(1px);pointer-events:none}
+@keyframes pul{50%{opacity:.35}}
+.back{inset:0;transform:rotateY(180deg) translateZ(27px);background:#0c2a19;border-radius:10px 4px 4px 10px}
+.spine{width:54px;height:500px;left:-27px;top:0;transform:rotateY(-90deg);background:linear-gradient(90deg,#0a2415,#17492c 50%,#0a2415);display:grid;place-items:center}
+.spine b{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.3em;font-size:15px;color:#8fe3ae;text-shadow:0 0 8px #3fbf75}
+.pg{background:#e6dcc0}
+.pr{width:54px;height:500px;left:333px;top:0;transform:rotateY(90deg);background:repeating-linear-gradient(90deg,#efe6cc 0 2px,#cfc3a2 2px 3px)}
+.pt{width:360px;height:54px;left:0;top:-27px;transform:rotateX(90deg);background:repeating-linear-gradient(0deg,#efe6cc 0 2px,#cfc3a2 2px 3px)}
+.pb{width:360px;height:54px;left:0;top:473px;transform:rotateX(-90deg);background:repeating-linear-gradient(0deg,#efe6cc 0 2px,#cfc3a2 2px 3px)}
+.t3d{position:absolute;left:7%;bottom:15%;width:90%;transform-style:preserve-3d;pointer-events:none}
+.t3d span{position:absolute;left:0;bottom:0;white-space:nowrap;font:800 62px/1 "Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;letter-spacing:.01em}
+.sub{position:absolute;left:8%;bottom:9%;font:700 10.5px/1 system-ui,sans-serif;letter-spacing:.2em;color:#0b2a18;text-shadow:0 1px 0 rgba(150,230,180,.35);transform:translateZ(1px)}
+.nav{position:fixed;top:max(14px,env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;gap:10px;z-index:5}
+.nav a,.nav button{font:inherit;font-size:14px;text-decoration:none;padding:9px 16px;border-radius:99px;background:rgba(10,30,18,.62);color:#bff2d0;border:1px solid rgba(120,220,160,.35);backdrop-filter:blur(6px);cursor:pointer}
+.nav a.p{background:#2e9d5b;color:#fff;border-color:#2e9d5b}
+.nav a:hover,.nav button:hover,.nav :focus-visible{outline:2px solid #7dffb0;outline-offset:2px}
+.hint{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:0;right:0;text-align:center;font-size:13px;color:#a6d8b6;opacity:.85;pointer-events:none}
+</style></head><body>
+<div id="sky"></div><canvas id="fx"></canvas>
+<div class="nav"><a href="index.html">‹ Portada</a><div style="display:flex;gap:8px"><button id="rs" type="button">Restablecer vista</button><a class="p" href="brotia.html">Entrar a BrotIA</a></div></div>
+<div class="stage" id="st" role="img" aria-label="Libro BrotIA 3D con un árbol de circuitos luminoso sobre musgo, en un bosque">
+ <div class="rig" id="rig"><div class="shadow"></div>
+  <div class="book" id="bk">
+   <div class="f front"><canvas id="cv" width="1008" height="1400"></canvas><div class="glow"></div><div class="t3d" id="tt"></div><div class="sub">INTELIGENCIA SOSTENIBLE EN ARMONÍA</div></div>
+   <div class="f back"></div><div class="f spine"><b>BROTIA 3D</b></div><div class="f pr"></div><div class="f pt"></div><div class="f pb"></div>
+  </div></div>
+</div>
+<div class="hint">Arrastrá para girar el libro · rueda o pellizco para acercar</div>
+<script>
+const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* tapa: cuero, musgo y árbol de circuitos */
+(function(){const c=document.getElementById('cv'),x=c.getContext('2d'),W=1008,H=1400;let s=7;const R=()=>(s=(s*16807)%2147483647)/2147483647;
+ let g=x.createRadialGradient(330,330,60,504,760,1100);g.addColorStop(0,'#1d5535');g.addColorStop(1,'#0a2314');x.fillStyle=g;x.fillRect(0,0,W,H);
+ for(let i=0;i<11000;i++){x.fillStyle=R()<.5?'rgba(255,255,255,.05)':'rgba(0,0,0,.12)';x.fillRect(R()*W,R()*H,1+R()*2,1+R()*2)}
+ for(let i=0;i<420;i++){const a=R()*6.283,rr=340+R()*290,px=504+Math.cos(a)*rr*1.05,py=600+Math.sin(a)*rr*.95,m=R()<.62;
+  x.fillStyle=m?['#3f7d2f','#5aa03a','#2c6226'][i%3]:['#3a2a1c','#2b1f15','#4a3524'][i%3];x.globalAlpha=.85;
+  for(let k=0;k<7;k++){x.beginPath();x.arc(px+(R()-.5)*60,py+(R()-.5)*60,3+R()*(m?11:9),0,6.283);x.fill()}}x.globalAlpha=1;
+ x.lineCap='round';
+ function br(px,py,len,a,d,up){const nx=px+Math.cos(a)*len,ny=py+Math.sin(a)*len,b=R()<(up?.3:.55),col=b?'#58b4ff':'#6dffa0';
+  x.strokeStyle=col;x.shadowColor=col;x.shadowBlur=18;x.lineWidth=Math.max(1.8,d*1.5);
+  x.beginPath();x.moveTo(px,py);x.quadraticCurveTo((px+nx)/2+(R()-.5)*len*.5,(py+ny)/2+(R()-.5)*len*.4,nx,ny);x.stroke();
+  if(d<=0){x.fillStyle='#eafff2';x.beginPath();x.arc(nx,ny,5+R()*3,0,6.283);x.fill();x.strokeStyle=col;x.lineWidth=2;x.stroke();return}
+  const n=R()<.45?3:2;for(let i=0;i<n;i++)br(nx,ny,len*(.74+R()*.1),a+(i-(n-1)/2)*(.55+R()*.3)+(R()-.5)*.2,d-1,up)}
+ br(504,690,150,-Math.PI/2,7,true);br(504,690,105,Math.PI/2,6,false);
+ x.shadowBlur=40;x.shadowColor='#9dffc8';x.fillStyle='#fff';x.beginPath();x.arc(504,690,11,0,6.283);x.fill();
+})();
+/* título con volumen */
+(function(){const t=document.getElementById('tt');const N=12;
+ for(let i=0;i<=N;i++){const sp=document.createElement('span');sp.innerHTML='BrotIA<i style="font-style:normal">3D</i>';
+  const top=i===N,k=i/N;sp.style.transform='translateZ('+(i*1.1+1)+'px)';
+  sp.style.color=top?'#46c27c':`rgb(${10+k*22|0},${58+k*60|0},${34+k*40|0})`;
+  if(top)sp.style.textShadow='0 0 18px rgba(110,255,170,.6)';t.appendChild(sp)}})();
+/* luces del bosque */
+const fx=document.getElementById('fx'),fc=fx.getContext('2d');let FW,FH,P=[],B=[];
+function size(){FW=fx.width=innerWidth;FH=fx.height=innerHeight;P=Array.from({length:Math.round(FW*FH/16000)+30},()=>({x:Math.random()*FW,y:Math.random()*FH,r:1+Math.random()*2.4,p:Math.random()*6.28,v:.15+Math.random()*.4,b:Math.random()<.35}));
+ B=Array.from({length:16},()=>({x:Math.random()*FW,y:Math.random()*FH*.55,r:20+Math.random()*60,a:.05+Math.random()*.09}))}
+addEventListener('resize',size);size();
+function luces(t){fc.clearRect(0,0,FW,FH);B.forEach(b=>{const g=fc.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);g.addColorStop(0,`rgba(255,220,140,${b.a})`);g.addColorStop(1,'rgba(255,220,140,0)');fc.fillStyle=g;fc.fillRect(b.x-b.r,b.y-b.r,b.r*2,b.r*2)});
+ P.forEach(p=>{if(!rm){p.y-=p.v;p.x+=Math.sin(t/1200+p.p)*.35;if(p.y<-10){p.y=FH+10;p.x=Math.random()*FW}}
+  const a=.45+.45*Math.sin(t/700+p.p),c=p.b?'90,180,255':'130,255,170',g=fc.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*6);g.addColorStop(0,`rgba(${c},${a})`);g.addColorStop(1,`rgba(${c},0)`);fc.fillStyle=g;fc.fillRect(p.x-p.r*6,p.y-p.r*6,p.r*12,p.r*12)})}
+/* cámara: arrastrar, zoom, giroscopio */
+const R0={rx:54,rz:-28,z:1},V={...R0},bk=document.getElementById('bk'),rig=document.getElementById('rig'),st=document.getElementById('st');
+let drag=false,lx=0,ly=0,gx=0,gy=0,base=1;
+const fit=()=>{base=Math.min(innerWidth/470,innerHeight/640,1.35)};addEventListener('resize',fit);fit();
+st.onpointerdown=e=>{drag=true;lx=e.clientX;ly=e.clientY;st.setPointerCapture(e.pointerId);askGyro()};
+st.onpointermove=e=>{if(!drag)return;V.rz+=(e.clientX-lx)*.45;V.rx=Math.max(5,Math.min(95,V.rx-(e.clientY-ly)*.3));lx=e.clientX;ly=e.clientY};
+st.onpointerup=st.onpointercancel=()=>{drag=false};
+st.addEventListener('wheel',e=>{e.preventDefault();V.z=Math.max(.6,Math.min(2,V.z*(e.deltaY<0?1.08:.93)))},{passive:false});
+document.getElementById('rs').onclick=()=>Object.assign(V,R0);
+let ask=false;function askGyro(){if(ask)return;ask=true;const D=window.DeviceOrientationEvent;if(D&&D.requestPermission){D.requestPermission().then(r=>{if(r==='granted')addEventListener('deviceorientation',gy_)}).catch(()=>{})}else addEventListener('deviceorientation',gy_)}
+function gy_(e){if(e.gamma==null)return;gx=Math.max(-25,Math.min(25,e.gamma))*.5;gy=Math.max(-25,Math.min(25,(e.beta||0)-45))*.4}
+function frame(t){const f=rm?0:Math.sin(t/1800);
+ bk.style.transform=`rotateX(${V.rx+gy+f*1.5}deg) rotateZ(${V.rz+gx+f*2}deg) translateZ(${f*6}px)`;
+ rig.style.transform=`scale(${base*V.z})`;luces(t);if(!rm||t<200)requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+</script></body></html>
